@@ -8,13 +8,15 @@ Configuration NewDomain {
     )
     Import-DscResource -ModuleName xActiveDirectory,PSDesiredStateConfiguration
 
-    Node $AllNodes.Where({$_.Role -eq 'FirstDC'}).NodeName {
+    Node $AllNodes.NodeName {
         $Node.WindowsFeatures.Foreach({
             WindowsFeature $_ {
                 Name   = $_
                 Ensure = 'Present'
             }
         })
+    }
+    Node $AllNodes.Where({$_.Role -eq 'FirstDC'}).NodeName {
         xADDomain $Node.DomainName {
             DomainName                    = $Node.DomainName
             DomainAdministratorCredential = $AdminCredential
@@ -41,12 +43,6 @@ Configuration NewDomain {
         }
     }
     Node $AllNodes.Where({$_.Role -eq 'SecondDC'}).NodeName {
-        $Node.WindowsFeatures.Foreach({
-            WindowsFeature $_ {
-                Name   = $_
-                Ensure = 'Present'
-            }
-        })
         xWaitForADDomain FirstDC {
             DomainName = $Node.DomainName
             DomainUserCredential = $DomainAdminCredential
